@@ -12,6 +12,8 @@ require (
 	github.com/elastic/gosigar v0.10.4 // indirect
 	github.com/ethereum/go-ethereum v1.9.10
 	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
+	github.com/google/goexpect v0.0.0-20191001010744-5b6988669ffa
+	github.com/google/goterm v0.0.0-20190703233501-fc88cf888a3f // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/huin/goupnp v1.0.0 // indirect
 	github.com/mattn/go-colorable v0.1.4 // indirect
