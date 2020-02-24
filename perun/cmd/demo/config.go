@@ -43,6 +43,9 @@ type chainConfig struct {
 	URL string
 }
 
+type apiConfig struct {
+}
+
 var config cfg
 
 // SetConfig called by viper when the config file was parsed

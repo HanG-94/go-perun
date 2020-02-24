@@ -24,11 +24,13 @@ var rootCmd = &cobra.Command{
 
 var cfgFile string
 var rawLvl string
+var errorMeansPanic bool
 
 func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file")
 	rootCmd.PersistentFlags().StringVar(&rawLvl, "log", "warn", "Logrus level")
+	rootCmd.PersistentFlags().BoolVar(&errorMeansPanic, "error-means-panic", false, "Errors will cause a panic")
 }
 
 // initConfig reads the config and sets the loglevel.

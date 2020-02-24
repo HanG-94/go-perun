@@ -6,39 +6,37 @@
 package main_test
 
 import (
+	//"fmt"
 	"regexp"
 	"testing"
 	"time"
 
-	expect "github.com/google/goexpect"
 	"github.com/stretchr/testify/require"
+
+	//"perun.network/go-perun/log"
+
+	expect "github.com/google/goexpect"
 )
 
 const (
-	timeout = 5 * time.Second
+	timeout = 8 * time.Second
 )
 
 var (
-	promptRE = regexp.MustCompile("^\\> ")
+	promptRE = regexp.MustCompile(".*%.*")
 )
 
+func exp(t *testing.T, r *regexp.Regexp, e *expect.GExpect) {
+	res, _, err := e.Expect(promptRE, timeout)
+	if err != nil {
+		t.Fatalf("Expected '%s' but got '%s'\n", r.String(), res)
+	}
+}
+
 func TestDemo(t *testing.T) {
-	e, _, err := expect.Spawn("date", timeout)
+	e, _, err := expect.Spawn("go run main.go demo --config alice.yaml --log panic", timeout)
 	require.NoError(t, err)
 	defer e.Close()
 
-	/*go func() {
-		for {
-			buff := make([]byte, 1024)
-			_, err := e.Read(buff)
-			if err != nil {
-				log.Errorln("Could not read from program")
-			}
-			fmt.Printf("%s", buff)
-		}
-	}()*/
-
-	_, _, err = e.Expect(promptRE, timeout)
-	require.NoError(t, err)
-
+	exp(t, promptRE, e)
 }

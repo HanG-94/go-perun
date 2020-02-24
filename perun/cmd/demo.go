@@ -24,19 +24,24 @@ var demoCmd = &cobra.Command{
 	Run: run,
 }
 
+var testAPI bool
+
 func init() {
 	rootCmd.AddCommand(demoCmd)
+	demoCmd.PersistentFlags().BoolVar(&testAPI, "test-api", false, "Export testing API at 8080")
 }
 
 // run is executed everytime the program is started with the `demo` sub-command.
 func run(c *cobra.Command, args []string) {
 	demo.Setup()
-	//flags := c.Flags()
+	if testAPI {
+		demo.StartTestAPI()
+	}
 
 	p := prompt.New(
 		executor,
 		completer,
-		prompt.OptionPrefix("> "),
+		prompt.OptionPrefix("% "),
 		prompt.OptionTitle("perun"),
 	)
 	p.Run()

@@ -12,6 +12,7 @@ import (
 	"math/rand"
 	"os"
 	"strconv"
+	"sync"
 	"text/tabwriter"
 
 	"github.com/pkg/errors"
@@ -51,6 +52,7 @@ type node struct {
 	funder  channel.Funder
 	cb      echannel.ContractBackend
 
+	mtx   sync.Mutex
 	peers map[string]*peer
 }
 
@@ -102,6 +104,8 @@ func newNode() (*node, error) {
 }
 
 func (n *node) Connect(args []string) error {
+	n.mtx.Lock()
+	defer n.mtx.Unlock()
 	n.log.Traceln("Connecting...")
 	alias := args[2]
 	// omit the 0x
@@ -178,6 +182,24 @@ func (n *node) getPeer(addr wallet.Address) *peer {
 	return nil
 }
 
+type BalTuple struct {
+	My, Other *big.Int
+}
+
+func (n *node) GetBals() map[string]BalTuple {
+	n.mtx.Lock()
+	defer n.mtx.Unlock()
+
+	bals := make(map[string]BalTuple)
+	for alias, peer := range n.peers {
+		if peer.ch != nil {
+			my, other := peer.ch.GetBalances()
+			bals[alias] = BalTuple{my, other}
+		}
+	}
+	return bals
+}
+
 var aliasCounter int
 
 func nextAlias() string {
@@ -187,6 +209,8 @@ func nextAlias() string {
 }
 
 func (n *node) Handle(req *client.ChannelProposalReq, res *client.ProposalResponder) {
+	n.mtx.Lock()
+	defer n.mtx.Unlock()
 	from := req.PeerAddrs[1]
 	n.log.WithField("from", from).Debug("Channel propsal")
 
@@ -219,6 +243,8 @@ func (n *node) Handle(req *client.ChannelProposalReq, res *client.ProposalRespon
 }
 
 func (n *node) Open(args []string) error {
+	n.mtx.Lock()
+	defer n.mtx.Unlock()
 	if n.client == nil {
 		return errors.New("Please 'deploy' first")
 	}
@@ -260,7 +286,10 @@ func (n *node) Open(args []string) error {
 }
 
 func (n *node) Send(args []string) error {
+	n.mtx.Lock()
+	defer n.mtx.Unlock()
 	n.log.Traceln("Sending...")
+
 	peer := n.peers[args[0]]
 	if peer == nil {
 		return errors.Errorf("peer not found %s", args[0])
@@ -272,7 +301,10 @@ func (n *node) Send(args []string) error {
 }
 
 func (n *node) Close(args []string) error {
+	n.mtx.Lock()
+	defer n.mtx.Unlock()
 	n.log.Traceln("Closing...")
+
 	alias := args[0]
 	peer := n.peers[alias]
 	if peer == nil {
@@ -299,6 +331,8 @@ func (n *node) Close(args []string) error {
 
 // Info prints the phase of all channels.
 func (n *node) Info(args []string) error {
+	n.mtx.Lock()
+	defer n.mtx.Unlock()
 	n.log.Traceln("Info...")
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', tabwriter.Debug)
@@ -319,6 +353,8 @@ func (n *node) Info(args []string) error {
 }
 
 func (n *node) Exit([]string) error {
+	n.mtx.Lock()
+	defer n.mtx.Unlock()
 	n.log.Traceln("Exiting...")
 
 	return n.client.Close()
@@ -337,4 +373,10 @@ func Setup() {
 		log.Fatalln("init error:", err)
 	}
 	backend = b
+}
+
+var api *TestAPI
+
+func StartTestAPI() {
+	api = NewTestAPI("127.0.0.1:8080")
 }

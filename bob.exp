@@ -1,0 +1,96 @@
+#!/usr/bin/#
+# This # #
+# Note that auto# necessarily has to guess about certain things.  Two reasons a script
+# might fail are:
+#
+# 1) timing - A surprising number of programs (rn, ksh, zsh, telnet,
+# etc.) and devices discard or ignore keystrokes that arrive "too
+# quickly" after prompts.  If you find your new script hanging up at
+# one spot, try adding a short sleep just before the previous send.
+# Setting "force_conservative" to 1 (see below) makes # automatically - pausing briefly before sending each character.  This
+# pacifies every program I know of.  The -c flag makes the script do
+# this in the first place.  The -C flag allows you to define a
+# character to toggle this mode off and on.
+
+set force_conservative 0  ;# set to 1 to force conservative mode even if
+			  ;# script wasn't run conservatively originally
+if {$force_conservative} {
+	set send_slow {1 .1}
+	proc send {ignore arg} {
+		sleep .1
+		exp_send -s -- $arg
+	}
+}
+
+#
+# 2) differing output - Some programs produce different output each time
+# they run.  The "date" command is an obvious example.  Another is
+# ftp, if it produces throughput statistics at the end of a file
+# transfer.  If this causes a problem, delete these patterns or replace
+# them with wildcards.  An alternative is to use the -p flag (for
+# "prompt") which makes # (i.e., the prompt).  The -P flag allows you to define a character to
+# toggle this mode off and on.
+#
+# Read the man page for more info.
+#
+# -Don
+
+set timeout -1
+spawn go run perun/main.go demo --config perun/alice.yaml --log warn
+set ALICE $spawn_id
+spawn go run perun/main.go demo --config perun/bob.yaml --log warn
+set BOB $spawn_id
+
+match_max 100000
+
+# Alice prompt
+# Bob prompt
+
+# Alice connect
+send -i $ALICE -- "connect 0.0.0.0 0x05e71027e7d3bd6261de7634cf50F0e2142067C4 bob"
+send -i $ALICE -- "\r"
+
+# Alice open
+send -i $ALICE -- "open bob 10 10"
+send -i $ALICE -- "\r"
+
+# Alice info
+send -i $ALICE -- "info"
+send -i $ALICE -- "\r"
+
+# Bob info
+send -i $BOB -- "info"
+send -i $BOB -- "\r"
+
+for {set v 1} {$v < 5} {incr v 1} {
+ 	set ab "[expr 10 - $v ]"
+ 	set bb "[expr 10 + $v ]"
+
+	# Alice send
+	send -i $ALICE -- "send bob 1"
+	send -i $ALICE -- "\r"
+
+	# Alice info
+	send -i $ALICE -- "info"
+	send -i $ALICE -- "\r"
+
+	# Bob info
+	send -i $BOB -- "info"
+	send -i $BOB -- "\r"
+}
+
+# Alice close
+send -i $ALICE -- "close bob"
+send -i $ALICE -- "\r"
+
+# Bob info
+send -i $BOB -- "info"
+send -i $BOB -- "\r"
+
+# Alice exit
+send -i $ALICE -- "exit"
+send -i $ALICE -- "\r"
+
+# Bob exit
+send -i $BOB -- "exit"
+send -i $BOB -- "\r"

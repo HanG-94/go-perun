@@ -89,6 +89,7 @@ func Executor(in string) error {
 	command := args[0]
 	args = args[1:]
 
+	log.Tracef("Reading command '%s'\n", command)
 	for _, cmd := range commands {
 		if cmd.Name == command {
 			if len(args) != len(cmd.Args) {
@@ -102,6 +103,7 @@ func Executor(in string) error {
 			return cmd.Function(args)
 		}
 	}
+	log.Warnf("Unknown command: '%s'\n", command)
 	return errors.Errorf("Unknown command: %s", command)
 }
 
