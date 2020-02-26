@@ -6,6 +6,7 @@
 package cmd_test
 
 import (
+	"fmt"
 	"net"
 	"regexp"
 	"testing"
@@ -15,14 +16,24 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const (
+var (
 	any     = regexp.MustCompile(".*")
 	timeout = time.Second * 20
 )
 
-func getBalances() string {
+func getBalances() (string, error) {
 	conn, err := net.Dial("tcp", "0.0.0.0:8080")
-
+	if err != nil {
+		return "", err
+	}
+	defer conn.Close()
+	fmt.Fprintf(conn, "getbals")
+	buff := make([]byte, 1024)
+	_, err = conn.Read(buff)
+	if err != nil {
+		return "", err
+	}
+	return string(buff), nil
 }
 
 func TestNodes(t *testing.T) {
@@ -34,10 +45,18 @@ func TestNodes(t *testing.T) {
 	require.NoError(t, err)
 	defer bob.Close()
 
+	// Alice start
 	alice.Expect(any, timeout)
+	// Bob start
 	bob.Expect(any, timeout)
+	// Alice connect to Bob
 	alice.Send("connect 0.0.0.0 0x05e71027e7d3bd6261de7634cf50F0e2142067C4 bob\r")
+	// Alice open channel to Bob
 	alice.Send("open bob 10 10\r")
+	// Alice wait for channel
 	alice.Expect(any, timeout)
-
+	// Alice get balances
+	b, err := getBalances()
+	require.NoError(t, err)
+	t.Log("Balances: ", b)
 }
