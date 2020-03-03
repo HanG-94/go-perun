@@ -37,7 +37,6 @@ func run(c *cobra.Command, args []string) {
 	if testAPI {
 		demo.StartTestAPI()
 	}
-
 	p := prompt.New(
 		executor,
 		completer,

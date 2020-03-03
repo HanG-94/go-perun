@@ -14,11 +14,11 @@ node:
  handletimeout: 10s
 
 chain:
- url: ws://10.70.5.238:8546
+ url: ws://10.70.5.101:8546
  adjudicator: 0xDc4A7e107aD6dBDA1870df34d70B51796BBd1335
  assetholder: 0xb051EAD0C6CC2f568166F8fEC4f07511B88678bA
- adjdeploytimeout: 10s
- assdeploytimeout: 10s
+ adjdeploytimeout: 20s
+ assdeploytimeout: 20s
 
 log:
  level: trace
