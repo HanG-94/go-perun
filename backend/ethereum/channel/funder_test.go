@@ -148,7 +148,7 @@ func testFunderFunding(t *testing.T, n int) {
 			require.NoError(rt, err, "Get Post-Funding state should succeed")
 			for i := range newAlloc {
 				for k := range newAlloc[i] {
-					assert.Equal(t, req.Allocation.OfParts[i][k], newAlloc[i][k], "Post-Funding balances should equal expected balances")
+					assert.Equal(t, req.Allocation.Balances[i][k], newAlloc[i][k], "Post-Funding balances should equal expected balances")
 				}
 			}
 		})
@@ -219,8 +219,8 @@ func newValidAllocation(parts []perunwallet.Address, assetETH common.Address) *c
 		}
 	}
 	return &channel.Allocation{
-		Assets:  assets,
-		OfParts: ofparts,
+		Assets:   assets,
+		Balances: ofparts,
 	}
 }
 
