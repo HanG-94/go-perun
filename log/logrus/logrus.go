@@ -28,24 +28,28 @@ func FromLogrus(l *logrus.Logger) *Logger {
 
 // WithField calls WithField on the logrus.Logger.
 func (l *Logger) WithField(key string, value interface{}) log.Logger {
+	return &Logger{l.Entry.WithField(key, stringify(value))}
+}
+
+func stringify(value interface{}) interface{} {
 	if str, ok := value.(fmt.Stringer); ok {
-		return &Logger{l.Entry.WithField(key, str.String())}
+		return str.String()
 	}
 	switch v := value.(type) {
 	case [32]byte:
-		return &Logger{l.Entry.WithField(key, hex.EncodeToString(v[:]))}
+		return hex.EncodeToString(v[:])
 	default:
-		return &Logger{l.Entry.WithField(key, value)}
+		return value
 	}
 }
 
 // WithFields calls WithField for all passed fields.
 func (l *Logger) WithFields(fields log.Fields) (ret log.Logger) {
-	ret = &Logger{l.Entry}
+	newFields := make(map[string]interface{})
 	for k, v := range fields {
-		ret = ret.WithField(k, v)
+		newFields[k] = stringify(v)
 	}
-	return
+	return &Logger{l.Entry.WithFields(newFields)}
 }
 
 // WithError calls WithError on the logrus.Logger.
