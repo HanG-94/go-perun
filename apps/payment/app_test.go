@@ -51,21 +51,37 @@ func TestApp_ValidTransition(t *testing.T) {
 		desc string
 	}{
 		{
-			from: alloc{{10, 0}, {5, 20}},
+			from: alloc{
+				{10, 0},
+				{5, 20},
+			},
 			tos: []to{
-				{alloc: alloc{{5, 5}, {10, 15}}, valid: -1}, // mixed
-				{alloc: alloc{{5, 0}, {10, 20}}, valid: 0},
-				{alloc: alloc{{12, 10}, {3, 10}}, valid: 1},
+				{alloc: alloc{
+					{5, 5},
+					{10, 15},
+				},
+					valid: -1}, // mixed
+				{alloc: alloc{
+					{5, 0},
+					{5, 20},
+				},
+					valid: 0},
+				{alloc: alloc{
+					{12, 0},
+					{5, 10},
+				},
+					valid: 1},
 			},
 			desc: "two-party",
 		},
+		////Modified to cope with the description: 3 parties 2 assets
 		{
-			from: alloc{{10, 10}, {5, 5}, {20, 20}},
+			from: alloc{{10, 5, 20}, {10, 5, 20}},
 			tos: []to{
-				{alloc: alloc{{5, 15}, {8, 3}, {22, 17}}, valid: -1}, // mixed
-				{alloc: alloc{{5, 0}, {8, 10}, {22, 25}}, valid: 0},
-				{alloc: alloc{{15, 10}, {0, 0}, {20, 25}}, valid: 1},
-				{alloc: alloc{{15, 15}, {10, 10}, {10, 10}}, valid: 2},
+				{alloc: alloc{{5, 8, 22}, {15, 3, 17}}, valid: -1}, // mixed
+				{alloc: alloc{{5, 8, 22}, {0, 10, 25}}, valid: 0},
+				{alloc: alloc{{15, 0, 20}, {10, 5, 25}}, valid: 1},
+				{alloc: alloc{{15, 10, 10}, {15, 10, 10}}, valid: 2},
 			},
 			desc: "three-party",
 		},
@@ -77,14 +93,16 @@ func TestApp_ValidTransition(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			assert := assert.New(t)
 			from := newStateWithAlloc(tt.from)
-			for i := range tt.from {
+			////PRECONDITION: all the FROM[.] need to have the same length
+			////tt.from[0] since ValidTransition's last field is called "actor"
+			for i := range tt.from[0] {
 				// valid self-transition
 				assert.Nil(app.ValidTransition(nil, from, from, channel.Index(i)))
 			}
 
 			for _, tto := range tt.tos {
 				to := newStateWithAlloc(tto.alloc)
-				for i := range tt.from {
+				for i := range tt.from[0] {
 					if i == tto.valid {
 						assert.Nil(app.ValidTransition(nil, from, to, channel.Index(i)))
 					} else {
@@ -108,10 +126,10 @@ func TestApp_ValidTransition(t *testing.T) {
 
 func newStateWithAlloc(balsv [][]int64) *channel.State {
 	bigBalsv := make([][]channel.Bal, len(balsv))
-	for i, bals := range balsv {
-		bigBalsv[i] = make([]channel.Bal, len(bals))
-		for j, bal := range bals {
-			bigBalsv[i][j] = big.NewInt(bal)
+	for i, asset := range balsv {
+		bigBalsv[i] = make([]channel.Bal, len(asset))
+		for j, partybal := range asset {
+			bigBalsv[i][j] = big.NewInt(partybal)
 		}
 	}
 

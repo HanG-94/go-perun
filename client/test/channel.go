@@ -39,12 +39,16 @@ type (
 	}
 )
 
+////not clear if need to be changed or not: was it supposed to insert the first BAL for each participant?
+//func newPaymentChannel(ch *client.Channel, r *Role) *paymentChannel {
+//	bals := make([]channel.Bal, 2)
+//	for i, balv := range ch.State().Balances {
+//		bals[i] = new(big.Int).Set(balv[0])
+//	}
 func newPaymentChannel(ch *client.Channel, r *Role) *paymentChannel {
 	bals := make([]channel.Bal, 2)
-	for i, balv := range ch.State().Balances {
-		bals[i] = new(big.Int).Set(balv[0])
-	}
-
+	////PRECONDITION: len(ch.State().Balances[0]) == len(bals) == 2
+	bals = ch.State().Balances[0]
 	return &paymentChannel{
 		Channel: ch,
 		r:       r,
@@ -166,5 +170,5 @@ func transferBal(bals []channel.Bal, ourIdx channel.Index, amount *big.Int) {
 }
 
 func stateBals(state *channel.State) []channel.Bal {
-	return []channel.Bal{state.Balances[0][0], state.Balances[1][0]}
+	return []channel.Bal{state.Balances[0][0], state.Balances[0][1]}
 }

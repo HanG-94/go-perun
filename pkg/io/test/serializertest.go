@@ -19,6 +19,7 @@ import (
 // and decoding of serializer values works.
 func GenericSerializerTest(t *testing.T, serializers ...perunio.Serializer) {
 	genericDecodeEncodeTest(t, serializers...)
+
 	GenericBrokenPipeTest(t, serializers...)
 }
 
@@ -52,6 +53,7 @@ func genericDecodeEncodeTest(t *testing.T, serializers ...perunio.Serializer) {
 func GenericBrokenPipeTest(t *testing.T, serializers ...perunio.Serializer) {
 	for i, v := range serializers {
 		r, w := io.Pipe()
+
 		_ = w.Close()
 		if err := v.Encode(w); err == nil {
 			t.Errorf("encoding on closed writer should fail, but does not. %dth element (%T)", i, v)
