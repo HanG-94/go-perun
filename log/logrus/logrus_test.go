@@ -8,6 +8,7 @@ package logrus
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -67,6 +68,8 @@ func TestLogrus(t *testing.T) {
 
 	rng := rand.New(rand.NewSource(0xDDDDD))
 	addr := wtest.NewRandomAddress(rng)
+	var data [32]byte
+	rng.Read(data[:])
 	// test fmt.Stringer, WithField
 	buf = new(bytes.Buffer)
 	FromLogrus(&logrus.Logger{
@@ -74,8 +77,9 @@ func TestLogrus(t *testing.T) {
 		Formatter: new(logrus.TextFormatter),
 		Hooks:     nil,
 		Level:     logrus.DebugLevel,
-	}).WithField("", addr).Infoln("")
-	a.Contains(buf.String(), "0x296342667D16ee21C81FD0E8F298e0EFd2357a08")
+	}).WithField("", addr).Infoln(data)
+	a.Contains(buf.String(), addr.String())
+	a.Contains(buf.String(), fmt.Sprintf("%v", data))
 	// test fmt.Stringer, WithFields
 	buf = new(bytes.Buffer)
 	FromLogrus(&logrus.Logger{
@@ -83,6 +87,7 @@ func TestLogrus(t *testing.T) {
 		Formatter: new(logrus.TextFormatter),
 		Hooks:     nil,
 		Level:     logrus.DebugLevel,
-	}).WithFields(log.Fields{"": addr}).Infoln("")
-	a.Contains(buf.String(), "0x296342667D16ee21C81FD0E8F298e0EFd2357a08")
+	}).WithFields(log.Fields{"": addr}).Infoln(data)
+	a.Contains(buf.String(), addr.String())
+	a.Contains(buf.String(), fmt.Sprintf("%v", data))
 }
