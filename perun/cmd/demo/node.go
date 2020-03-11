@@ -41,16 +41,16 @@ type peer struct {
 
 type node struct {
 	// rng is uses as substitution for a wallet to generate new accounts
-	rng     *rand.Rand
-	client  *client.Client
-	log     log.Logger
-	asset   channel.Asset
-	acc     wallet.Account
-	offAcc  wallet.Account
-	dialer  *net.Dialer
-	settler channel.Settler
-	funder  channel.Funder
-	cb      echannel.ContractBackend
+	rng         *rand.Rand
+	client      *client.Client
+	log         log.Logger
+	asset       channel.Asset
+	acc         wallet.Account
+	offAcc      wallet.Account
+	dialer      *net.Dialer
+	adjudicator channel.Adjudicator
+	funder      channel.Funder
+	cb          echannel.ContractBackend
 
 	mtx   sync.Mutex
 	peers map[string]*peer
@@ -150,7 +150,10 @@ func (n *node) deploy() error {
 }
 
 func (n *node) setContracts(adjAddr, assAddr common.Address) {
-	n.settler = echannel.NewETHSettler(n.cb, adjAddr)
+	var recvAddr common.Address
+	recvAddr.SetBytes(n.acc.Address().Bytes())
+
+	n.adjudicator = echannel.NewAdjudicator(n.cb, adjAddr, recvAddr)
 	n.funder = echannel.NewETHFunder(n.cb, assAddr)
 	n.asset = &ewallet.Address{Address: assAddr}
 	n.log.WithField("Asset", adjAddr).WithField("Adj", assAddr).Debug("Set contracts")
@@ -161,7 +164,7 @@ func (n *node) listen() error {
 	n.offAcc = wtest.NewRandomAccount(n.rng)
 	n.log.WithField("off-chain", n.offAcc.Address()).Info("Generating account")
 
-	n.client = client.New(n.acc, n.dialer, n, n.funder, n.settler)
+	n.client = client.New(n.acc, n.dialer, n, n.funder, n.adjudicator)
 	n.log.Trace("Created client object")
 	host := config.Node.IP + ":" + strconv.Itoa(int(config.Node.InPort))
 	n.log.WithField("host", host).Trace("Listening for connections")
@@ -182,19 +185,19 @@ func (n *node) getPeer(addr wallet.Address) *peer {
 	return nil
 }
 
-type BalTuple struct {
+type balTuple struct {
 	My, Other *big.Int
 }
 
-func (n *node) GetBals() map[string]BalTuple {
+func (n *node) GetBals() map[string]balTuple {
 	n.mtx.Lock()
 	defer n.mtx.Unlock()
 
-	bals := make(map[string]BalTuple)
+	bals := make(map[string]balTuple)
 	for alias, peer := range n.peers {
 		if peer.ch != nil {
 			my, other := peer.ch.GetBalances()
-			bals[alias] = BalTuple{my, other}
+			bals[alias] = balTuple{my, other}
 		}
 	}
 	return bals

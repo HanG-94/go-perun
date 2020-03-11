@@ -63,17 +63,17 @@ func TestNodes(t *testing.T) {
 	_, _, e := alice.Expect(any, timeout)
 	require.NoError(t, e)
 
-	fmt.Println("Waiting for contract deployment")
+	t.Log("Waiting for contract deployment")
 	// Bob start
 	_, _, e = bob.Expect(any, timeout)
 	require.NoError(t, e)
 
 	// Alice connect to Bob
 	require.NoError(t, sendSynchron(alice, "connect 127.0.0.1 0x05e71027e7d3bd6261de7634cf50F0e2142067C4 bob\n"))
-	fmt.Println("Alice connected")
+	t.Log("Alice connected")
 	// Alice open channel to Bob
 	require.NoError(t, sendSynchron(alice, "open bob 1000 1000\n"))
-	fmt.Println("Opening channel…")
+	t.Log("Opening channel…")
 	<-time.After(time.Second * 5)
 	// Alice send to Bob and Bob to Alice
 	for i := 0; i < 25; i++ {
