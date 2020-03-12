@@ -122,7 +122,7 @@ func channelStateToEthState(s *channel.State) adjudicator.ChannelState {
 		Locked:   locked,
 	}
 	// Check allocation dimensions
-	if len(outcome.Assets) != len(outcome.Balances) || len(s.Balances) != len(outcome.Balances[0]) {
+	if len(outcome.Assets) != len(outcome.Balances) || len(s.Balances) != len(outcome.Balances) {
 		log.Panic("invalid allocation dimensions")
 	}
 	appData := new(bytes.Buffer)
@@ -235,21 +235,24 @@ func pwToCommonAddresses(addr []perunwallet.Address) []common.Address {
 
 // transformPartBals turns valid channel.Allocation.Balances into adjudicator.Allocation.balances.
 // Currently the channel.Allocation.Balances are encoded as following:
-// Balances[i][k] is the balance for the i-th participant on the k-th asset.
+// Balances[i][k] is the balance for the k-th participant on the i-th asset.
 // For ethereum it is cheaper to translate this to the following.
 // balances[i][k] is the balance for the i-th asset of participant k.
+
+////did not change the name "ofBals", could cause misunderstanding
+////PRECONDITION: all ofBals[i] should have the same length
 func transformPartBals(ofBals [][]*big.Int) [][]*big.Int {
 	if len(ofBals) == 0 || len(ofBals[0]) == 0 {
 		return [][]*big.Int{}
 	}
-	trans := make([][]*big.Int, len(ofBals[0]))
-	for k := range ofBals[0] {
-		trans[k] = make([]*big.Int, len(ofBals))
+	trans := make([][]*big.Int, len(ofBals))
+	for i := range ofBals {
+		trans[i] = make([]*big.Int, len(ofBals[i]))
 	}
 	// Fill with balances.
 	for i := range ofBals {
 		for k, bal := range ofBals[i] {
-			trans[k][i] = bal
+			trans[i][k] = bal
 		}
 	}
 	return trans

@@ -210,17 +210,17 @@ func newValidAllocation(parts []perunwallet.Address, assetETH common.Address) *c
 		&Asset{Address: assetETH},
 	}
 	rng := rand.New(rand.NewSource(1337))
-	ofparts := make([][]channel.Bal, len(parts))
-	for i := 0; i < len(ofparts); i++ {
-		ofparts[i] = make([]channel.Bal, len(assets))
-		for k := 0; k < len(assets); k++ {
+	balances := make([][]channel.Bal, len(assets))
+	for i := 0; i < len(assets); i++ {
+		balances[i] = make([]channel.Bal, len(parts))
+		for k := 0; k < len(parts); k++ {
 			// create new random balance in range [1,999]
-			ofparts[i][k] = big.NewInt(rng.Int63n(999) + 1)
+			balances[i][k] = big.NewInt(rng.Int63n(999) + 1)
 		}
 	}
 	return &channel.Allocation{
 		Assets:   assets,
-		Balances: ofparts,
+		Balances: balances,
 	}
 }
 
@@ -228,9 +228,9 @@ func getOnChainAllocation(ctx context.Context, f *Funder, request channel.Fundin
 	var channelID = request.Params.ID()
 	partIDs := calcFundingIDs(request.Params.Parts, channelID)
 
-	alloc := make([][]channel.Bal, len(request.Params.Parts))
-	for i := 0; i < len(request.Params.Parts); i++ {
-		alloc[i] = make([]channel.Bal, len(request.Allocation.Assets))
+	alloc := make([][]channel.Bal, len(request.Allocation.Assets))
+	for i := 0; i < len(request.Allocation.Assets); i++ {
+		alloc[i] = make([]channel.Bal, len(request.Params.Parts))
 	}
 
 	for k, asset := range request.Allocation.Assets {
@@ -248,7 +248,7 @@ func getOnChainAllocation(ctx context.Context, f *Funder, request channel.Fundin
 			if err != nil {
 				return nil, err
 			}
-			alloc[i][k] = val
+			alloc[k][i] = val
 		}
 	}
 	return alloc, nil
