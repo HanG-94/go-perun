@@ -93,9 +93,8 @@ func TestApp_ValidTransition(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			assert := assert.New(t)
 			from := newStateWithAlloc(tt.from)
-			////PRECONDITION: all the FROM[.] need to have the same length
-			////tt.from[0] since ValidTransition's last field is called "actor"
-			for i := range tt.from[0] {
+			numParticipants := len(tt.from[0])
+			for i := 0; i < numParticipants; i++ {
 				// valid self-transition
 				assert.Nil(app.ValidTransition(nil, from, from, channel.Index(i)))
 			}
